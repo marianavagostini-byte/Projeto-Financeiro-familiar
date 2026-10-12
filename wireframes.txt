@@ -1,6 +1,7 @@
 1- Login
 2- Dashboard principal
-3- Despesas
-4- Cartoes
-5- Metas
-6- Configuracoes
+3 - renda e Salario 
+4- Despesas
+5- Cartoes
+6- Metas
+7- Configuracoes
