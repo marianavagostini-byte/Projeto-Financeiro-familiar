@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080d18" />
+    <title>Controle Financeiro — Família Vieira Agostini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        background-color: #080d18;
+        background-image: radial-gradient(ellipse at 50% -25%, rgba(37, 99, 235, 0.2), transparent 55%);
+      }
+      input, select, button { font: inherit; }
+      input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+        -webkit-text-fill-color: #e2e8f0;
+        box-shadow: 0 0 0 1000px #111827 inset;
+        transition: background-color 9999s ease-in-out 0s;
+      }
+      .surface {
+        background: linear-gradient(145deg, rgba(17, 25, 41, 0.96), rgba(13, 19, 32, 0.96));
+      }
+      .field {
+        width: 100%;
+        border: 1px solid rgba(71, 85, 105, 0.56);
+        border-radius: 0.75rem;
+        background: rgba(8, 13, 24, 0.72);
+        color: #f1f5f9;
+        outline: none;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+      }
+      .field::placeholder { color: #64748b; }
+      .field:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+      .tab-button[aria-selected="true"] {
+        color: #eff6ff;
+        background: rgba(59, 130, 246, 0.15);
+        box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.2);
+      }
+      .transaction-row:last-child { border-bottom: 0; }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-slate-100 antialiased selection:bg-blue-500/30">
+    <header class="sticky top-0 z-10 border-b border-slate-800/80 bg-[#080d18]/85 backdrop-blur-xl">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+        <a href="#" class="flex items-center gap-3" aria-label="Controle Financeiro — Família Vieira Agostini">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400 ring-1 ring-blue-400/20">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <circle cx="12" cy="12" r="3" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 9h.01M17 15h.01M3 9h2m14 6h2" />
+            </svg>
+          </span>
+          <span>
+            <span class="block text-sm font-semibold tracking-tight text-white sm:text-base">Controle Financeiro</span>
+            <span class="block text-[10px] tracking-wide text-slate-400 sm:text-[11px]">Família Vieira Agostini</span>
+          </span>
+        </a>
+
+        <div id="user-info" class="hidden items-center gap-3">
+          <div class="hidden text-right sm:block">
+            <p id="user-name" class="max-w-52 truncate text-sm font-medium text-slate-200"></p>
+            <span id="user-role-badge" class="text-[11px] font-medium uppercase tracking-wider text-blue-400"></span>
+          </div>
+          <span id="user-avatar" class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-sm font-semibold text-blue-300" aria-hidden="true"></span>
+          <button id="logout-button" type="button" class="rounded-lg border border-slate-700/80 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white">
+            Sair
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-14">
+      <section id="auth-section" class="mx-auto max-w-md py-6 sm:py-12" aria-labelledby="auth-title">
+        <div class="mb-8 text-center">
+          <span class="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400 ring-1 ring-blue-400/20" aria-hidden="true">
+            <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <circle cx="12" cy="12" r="3" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 9h.01M17 15h.01M3 9h2m14 6h2" />
+            </svg>
+          </span>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">O seu espaço financeiro</p>
+          <h1 id="auth-title" class="text-3xl font-semibold tracking-tight text-white">Controle Financeiro</h1>
+          <p id="auth-subtitle" class="mt-2 text-sm leading-6 text-slate-400">Família Vieira Agostini · Acompanhe as finanças num só lugar.</p>
+        </div>
+
+        <div class="surface rounded-2xl border border-slate-700/50 p-6 shadow-2xl shadow-black/20 sm:p-8">
+          <div class="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-slate-800 bg-[#080d18]/75 p-1" role="tablist" aria-label="Acesso à conta">
+            <button id="login-tab" class="tab-button rounded-lg px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:text-white" type="button" role="tab" aria-selected="true" aria-controls="login-panel">Iniciar sessão</button>
+            <button id="register-tab" class="tab-button rounded-lg px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:text-white" type="button" role="tab" aria-selected="false" aria-controls="register-panel">Criar conta</button>
+          </div>
+
+          <form id="login-panel" class="space-y-4" role="tabpanel" aria-labelledby="login-tab">
+            <div>
+              <label for="login-email" class="mb-2 block text-sm font-medium text-slate-300">E-mail</label>
+              <input class="field px-4 py-3 text-sm" type="email" id="login-email" name="email" autocomplete="email" placeholder="nome@exemplo.com" required />
+            </div>
+            <div>
+              <label for="login-senha" class="mb-2 block text-sm font-medium text-slate-300">Palavra-passe</label>
+              <input class="field px-4 py-3 text-sm" type="password" id="login-senha" name="password" autocomplete="current-password" placeholder="A sua palavra-passe" required />
+            </div>
+            <label for="remember-me" class="flex w-fit cursor-pointer items-center gap-2.5 text-sm text-slate-400 transition hover:text-slate-200">
+              <input id="remember-me" name="remember" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-500 accent-blue-500 focus:ring-2 focus:ring-blue-500/40" />
+              Lembrar-me neste dispositivo
+            </label>
+            <p id="login-erro" class="hidden rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2.5 text-sm text-rose-300" role="alert"></p>
+            <button id="login-submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-wait disabled:opacity-60" type="submit">
+              Entrar na conta
+              <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>
+            </button>
+          </form>
+
+          <form id="register-panel" class="hidden space-y-4" role="tabpanel" aria-labelledby="register-tab" aria-hidden="true">
+            <div>
+              <label for="register-nome" class="mb-2 block text-sm font-medium text-slate-300">Nome</label>
+              <input class="field px-4 py-3 text-sm" type="text" id="register-nome" name="nome" autocomplete="name" placeholder="O seu nome" maxlength="100" required disabled />
+            </div>
+            <div>
+              <label for="register-email" class="mb-2 block text-sm font-medium text-slate-300">E-mail</label>
+              <input class="field px-4 py-3 text-sm" type="email" id="register-email" name="email" autocomplete="email" placeholder="nome@exemplo.com" maxlength="100" required disabled />
+            </div>
+            <div>
+              <label for="register-senha" class="mb-2 block text-sm font-medium text-slate-300">Palavra-passe</label>
+              <input class="field px-4 py-3 text-sm" type="password" id="register-senha" name="senha" autocomplete="new-password" placeholder="Crie uma palavra-passe" required disabled />
+            </div>
+            <p id="register-erro" class="hidden rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2.5 text-sm text-rose-300" role="alert"></p>
+            <button id="register-submit" class="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-wait disabled:opacity-60" type="submit" disabled>
+              Criar conta
+            </button>
+          </form>
+          <p class="mt-6 text-center text-xs leading-5 text-slate-500">Os seus dados são protegidos e acessíveis apenas à sua família.</p>
+        </div>
+      </section>
+
+      <section id="dashboard-section" class="hidden space-y-8" aria-labelledby="dashboard-title">
+        <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p class="mb-2 text-sm font-medium text-blue-400">O seu resumo financeiro</p>
+            <h1 id="dashboard-title" class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Visão geral</h1>
+            <p class="mt-2 text-sm text-slate-400">Aqui está o panorama das suas finanças.</p>
+          </div>
+          <p id="last-updated" class="text-xs text-slate-500"></p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-3">
+          <article class="surface relative overflow-hidden rounded-2xl border border-blue-400/20 p-5 shadow-xl shadow-black/10 sm:p-6">
+            <div class="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-blue-500/10 blur-3xl" aria-hidden="true"></div>
+            <div class="relative flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-medium text-slate-400">Saldo total</p>
+                <p id="summary-balance" class="mt-4 text-3xl font-semibold tracking-tight text-white" aria-live="polite">—</p>
+              </div>
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400">
+                <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-11ZM3 7.5V5a1 1 0 0 1 1-1h15M16 14h2" /><path stroke-linecap="round" stroke-linejoin="round" d="M3 8h18" /></svg>
+              </span>
+            </div>
+            <p class="relative mt-4 text-xs text-slate-500">Receitas menos despesas registadas</p>
+          </article>
+
+          <article class="surface rounded-2xl border border-slate-700/50 p-5 shadow-xl shadow-black/10 sm:p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-medium text-slate-400">Total de receitas</p>
+                <p id="summary-income" class="mt-4 text-3xl font-semibold tracking-tight text-emerald-400" aria-live="polite">—</p>
+              </div>
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-400">
+                <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m-6 6 6-6 6 6" /></svg>
+              </span>
+            </div>
+            <p class="mt-4 text-xs text-slate-500">Soma das receitas registadas</p>
+          </article>
+
+          <article class="surface rounded-2xl border border-slate-700/50 p-5 shadow-xl shadow-black/10 sm:p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-medium text-slate-400">Total de despesas</p>
+                <p id="summary-expenses" class="mt-4 text-3xl font-semibold tracking-tight text-rose-400" aria-live="polite">—</p>
+              </div>
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-400/10 text-rose-400">
+                <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m6-6-6 6-6-6" /></svg>
+              </span>
+            </div>
+            <p class="mt-4 text-xs text-slate-500">Soma das despesas registadas</p>
+          </article>
+        </div>
+
+        <section id="family-control" class="hidden surface rounded-2xl border border-blue-400/20 p-5 shadow-xl shadow-blue-950/10 sm:p-6" aria-labelledby="family-control-title">
+          <div class="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p class="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-400">Painel exclusivo</p>
+              <h2 id="family-control-title" class="text-xl font-semibold text-white">Controlo Familiar</h2>
+              <p class="mt-1 text-sm text-slate-400">Despesas comparadas por membro da família.</p>
+            </div>
+            <div class="w-full sm:max-w-xs">
+              <label for="family-member-filter" class="mb-2 block text-xs font-medium text-slate-400">Filtrar por Membro da Família</label>
+              <select id="family-member-filter" class="field px-4 py-3 text-sm">
+                <option value="">Todos os membros</option>
+              </select>
+            </div>
+          </div>
+          <p id="family-summary-error" class="hidden mb-4 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2.5 text-sm text-rose-300" role="alert"></p>
+          <div id="family-chart-empty" class="hidden flex min-h-48 items-center justify-center text-center text-sm text-slate-500">Sem despesas de membros para apresentar neste período.</div>
+          <div id="family-chart-container" class="relative h-72">
+            <canvas id="family-chart" aria-label="Comparação de despesas por membro da família"></canvas>
+          </div>
+        </section>
+
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <article class="surface rounded-2xl border border-slate-700/50 p-5 shadow-xl shadow-black/10 sm:p-6" aria-labelledby="credit-title">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-sm font-medium text-slate-400">Cartão de crédito</p>
+                <h2 id="credit-title" class="mt-1 text-base font-semibold text-white">Total comprometido</h2>
+              </div>
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400/10 text-violet-300">
+                <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2" /><path stroke-linecap="round" d="M3 10h18m-14 5h3" /></svg>
+              </span>
+            </div>
+            <p id="credit-total" class="mt-5 text-3xl font-semibold tracking-tight text-violet-300" aria-live="polite">—</p>
+            <p class="mt-2 text-xs text-slate-500">Despesas pagas com cartão de crédito no período selecionado.</p>
+          </article>
+
+          <article class="surface rounded-2xl border border-slate-700/50 p-5 shadow-xl shadow-black/10 sm:p-6" aria-labelledby="category-chart-title">
+            <div class="mb-4">
+              <h2 id="category-chart-title" class="font-semibold text-white">Despesas por categoria</h2>
+              <p class="mt-1 text-xs text-slate-500">Distribuição das despesas no período selecionado</p>
+            </div>
+            <div id="category-chart-empty" class="hidden flex min-h-48 items-center justify-center text-center text-sm text-slate-500">Sem despesas para apresentar neste período.</div>
+            <div id="category-chart-container" class="relative mx-auto h-56 max-w-xl">
+              <canvas id="category-chart" aria-label="Gráfico de despesas por categoria"></canvas>
+            </div>
+            <p id="category-chart-error" class="hidden text-sm text-rose-300" role="alert">Não foi possível carregar o gráfico. Verifique a ligação à biblioteca de gráficos.</p>
+          </article>
+        </div>
+
+        <section class="surface rounded-2xl border border-slate-700/50 p-5 shadow-xl shadow-black/10 sm:p-6" aria-labelledby="form-title">
+          <div class="mb-5 flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
+            </span>
+            <div>
+              <h2 id="form-title" class="font-semibold text-white">Nova transação</h2>
+              <p class="text-xs text-slate-500">Registe uma receita ou despesa</p>
+            </div>
+          </div>
+          <form id="transacao-form" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="lg:col-span-2">
+              <label for="trans-desc" class="mb-2 block text-xs font-medium text-slate-400">Descrição</label>
+              <input class="field px-4 py-3 text-sm" type="text" id="trans-desc" name="descricao" placeholder="Ex.: Compras de supermercado" maxlength="255" required />
+            </div>
+            <div>
+              <label for="trans-valor" class="mb-2 block text-xs font-medium text-slate-400">Valor (R$)</label>
+              <input class="field px-4 py-3 text-sm" type="number" id="trans-valor" name="valor" placeholder="0,00" min="0.01" step="0.01" inputmode="decimal" required />
+            </div>
+            <div>
+              <label for="trans-tipo" class="mb-2 block text-xs font-medium text-slate-400">Tipo</label>
+              <select class="field px-4 py-3 text-sm" id="trans-tipo" name="tipo" required>
+                <option value="despesa">Despesa</option>
+                <option value="receita">Receita</option>
+              </select>
+            </div>
+            <div>
+              <label for="trans-categoria" class="mb-2 block text-xs font-medium text-slate-400">Categoria</label>
+              <select class="field px-4 py-3 text-sm" id="trans-categoria" name="categoria" required>
+                <option value="Alimentação">Alimentação</option>
+                <option value="Transporte">Transporte</option>
+                <option value="Lazer">Lazer</option>
+                <option value="Salário">Salário</option>
+                <option value="Contas Gerais">Contas Gerais</option>
+              </select>
+            </div>
+            <div id="categoria-detalhe-wrapper" class="hidden">
+              <label for="trans-categoria-detalhe" class="mb-2 block text-xs font-medium text-slate-400">Detalhe da conta</label>
+              <input class="field px-4 py-3 text-sm" type="text" id="trans-categoria-detalhe" name="categoria_detalhe" placeholder="Ex.: Água, eletricidade" maxlength="100" />
+            </div>
+            <div>
+              <label for="trans-metodo-pagamento" class="mb-2 block text-xs font-medium text-slate-400">Método de pagamento</label>
+              <select class="field px-4 py-3 text-sm" id="trans-metodo-pagamento" name="metodo_pagamento" required>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Débito">Débito</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+              </select>
+            </div>
+            <button id="transacao-submit" type="submit" class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-wait disabled:opacity-60 lg:self-end">
+              <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
+              Adicionar
+            </button>
+          </form>
+          <p id="transacao-erro" class="mt-4 hidden rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2.5 text-sm text-rose-300" role="alert"></p>
+        </section>
+
+        <section class="surface overflow-hidden rounded-2xl border border-slate-700/50 shadow-xl shadow-black/10" aria-labelledby="transactions-title">
+          <div class="flex flex-col justify-between gap-4 border-b border-slate-800 px-5 py-5 lg:flex-row lg:items-end sm:px-6">
+            <div>
+              <h2 id="transactions-title" class="font-semibold text-white">Transações recentes</h2>
+              <p class="mt-1 text-xs text-slate-500">Movimentos autorizados para a sua conta</p>
+            </div>
+            <form id="period-filter" class="flex flex-wrap items-end gap-3">
+              <div>
+                <label for="filter-start" class="mb-1.5 block text-[11px] font-medium text-slate-500">De</label>
+                <input class="field px-3 py-2 text-xs" type="date" id="filter-start" name="inicio" />
+              </div>
+              <div>
+                <label for="filter-end" class="mb-1.5 block text-[11px] font-medium text-slate-500">Até</label>
+                <input class="field px-3 py-2 text-xs" type="date" id="filter-end" name="fim" />
+              </div>
+              <button type="submit" class="rounded-lg bg-slate-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-slate-600">Filtrar</button>
+              <button id="clear-filter" type="button" class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-slate-800">Limpar</button>
+              <button id="backup-button" type="button" class="flex items-center gap-2 rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs font-medium text-blue-300 transition hover:bg-blue-500/20 disabled:cursor-wait disabled:opacity-60">
+                <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3" /></svg>
+                Backup JSON
+              </button>
+            </form>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 sm:px-6">
+            <span id="transaction-count" class="w-fit rounded-full border border-slate-700/70 bg-slate-800/70 px-3 py-1 text-xs font-medium text-slate-400">0 transações</span>
+            <p id="backup-status" class="hidden text-xs text-emerald-300" role="status"></p>
+          </div>
+          <p id="transacoes-erro" class="mx-5 mt-4 hidden rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2.5 text-sm text-rose-300 sm:mx-6" role="alert"></p>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] text-left">
+              <thead class="bg-slate-900/40">
+                <tr class="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                  <th scope="col" class="px-5 py-3.5 font-medium sm:px-6">Descrição</th>
+                  <th scope="col" class="px-5 py-3.5 font-medium">Categoria</th>
+                  <th id="transaction-member-heading" scope="col" class="hidden px-5 py-3.5 font-medium">Membro / Usuário</th>
+                  <th scope="col" class="px-5 py-3.5 font-medium">Tipo</th>
+                  <th scope="col" class="px-5 py-3.5 font-medium">Data</th>
+                  <th scope="col" class="px-5 py-3.5 font-medium">Pagamento</th>
+                  <th scope="col" class="px-5 py-3.5 text-right font-medium sm:px-6">Valor</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-transacoes" class="divide-y divide-slate-800/80">
+                <tr><td id="transaction-loading-cell" colspan="6" class="px-6 py-12 text-center text-sm text-slate-500">A carregar transações…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <footer class="pb-3 text-center text-xs text-slate-600">As suas finanças, com clareza.</footer>
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      const API_URL = "http://127.0.0.1:8000";
+      const STORAGE_KEYS = {
+        token: "token",
+        role: "tipo",
+        email: "email",
+        name: "nome",
+        rememberedEmail: "rememberedEmail",
+      };
+      const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+      const dateFormatter = new Intl.DateTimeFormat("pt-PT", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+      const categoriasBase = [
+        "Alimentação",
+        "Transporte",
+        "Lazer",
+        "Salário",
+        "Contas Gerais",
+      ];
+      const categoriasAdmin = ["Moradia", "Contas Fixas"];
+      const coresGrafico = [
+        "#3b82f6",
+        "#10b981",
+        "#f59e0b",
+        "#a78bfa",
+        "#f472b6",
+        "#22d3ee",
+        "#fb7185",
+      ];
+      let graficoCategorias = null;
+      let graficoMembros = null;
+      let resumoMembros = [];
+
+      const elements = {
+        authSection: document.getElementById("auth-section"),
+        dashboardSection: document.getElementById("dashboard-section"),
+        userInfo: document.getElementById("user-info"),
+        userName: document.getElementById("user-name"),
+        userRole: document.getElementById("user-role-badge"),
+        userAvatar: document.getElementById("user-avatar"),
+        loginTab: document.getElementById("login-tab"),
+        registerTab: document.getElementById("register-tab"),
+        loginPanel: document.getElementById("login-panel"),
+        registerPanel: document.getElementById("register-panel"),
+        loginError: document.getElementById("login-erro"),
+        registerError: document.getElementById("register-erro"),
+        transactionError: document.getElementById("transacao-erro"),
+        transactionsError: document.getElementById("transacoes-erro"),
+        transactionRows: document.getElementById("tabela-transacoes"),
+        categorySelect: document.getElementById("trans-categoria"),
+        categoryDetailWrapper: document.getElementById("categoria-detalhe-wrapper"),
+        categoryDetail: document.getElementById("trans-categoria-detalhe"),
+        familyControl: document.getElementById("family-control"),
+        familyMemberFilter: document.getElementById("family-member-filter"),
+        familySummaryError: document.getElementById("family-summary-error"),
+        familyChartContainer: document.getElementById("family-chart-container"),
+        familyChartEmpty: document.getElementById("family-chart-empty"),
+      };
+
+      function showMessage(element, message) {
+        element.textContent = message;
+        element.classList.remove("hidden");
+      }
+
+      function clearMessage(element) {
+        element.textContent = "";
+        element.classList.add("hidden");
+        element.classList.remove("border-emerald-400/20", "bg-emerald-400/10", "text-emerald-300");
+        element.classList.add("border-rose-400/20", "bg-rose-400/10", "text-rose-300");
+      }
+
+      function setBusy(button, busy, busyText, normalText) {
+        button.disabled = busy;
+        if (busy) {
+          button.dataset.originalText = button.textContent.trim();
+          button.textContent = busyText;
+        } else if (button.dataset.originalText) {
+          button.textContent = normalText || button.dataset.originalText;
+          delete button.dataset.originalText;
+        }
+      }
+
+      async function requestApi(path, options = {}) {
+        const headers = new Headers(options.headers || {});
+        const token = localStorage.getItem(STORAGE_KEYS.token);
+        if (token) headers.set("Authorization", `Bearer ${token}`);
+
+        let response;
+        try {
+          response = await fetch(`${API_URL}${path}`, { ...options, headers });
+        } catch {
+          throw new Error("Não foi possível contactar a API. Confirme se o servidor está em execução.");
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        const body = contentType.includes("application/json")
+          ? await response.json()
+          : null;
+        if (!response.ok) {
+          const detail = body && typeof body.detail === "string" ? body.detail : null;
+          throw new Error(detail || `O pedido falhou (HTTP ${response.status}).`);
+        }
+        return body;
+      }
+
+      function selectAuthTab(tab) {
+        const showLogin = tab === "login";
+        elements.loginTab.setAttribute("aria-selected", String(showLogin));
+        elements.registerTab.setAttribute("aria-selected", String(!showLogin));
+        elements.loginPanel.classList.toggle("hidden", !showLogin);
+        elements.registerPanel.classList.toggle("hidden", showLogin);
+        elements.loginPanel.setAttribute("aria-hidden", String(!showLogin));
+        elements.registerPanel.setAttribute("aria-hidden", String(showLogin));
+        for (const input of elements.loginPanel.elements) input.disabled = !showLogin;
+        for (const input of elements.registerPanel.elements) input.disabled = showLogin;
+        document.getElementById("auth-subtitle").textContent = showLogin
+          ? "Família Vieira Agostini · Acompanhe as finanças num só lugar."
+          : "Família Vieira Agostini · Crie a sua conta para acompanhar as finanças em conjunto.";
+        clearMessage(elements.loginError);
+        clearMessage(elements.registerError);
+      }
+
+      function configurarCategorias(isAdmin) {
+        const selectedCategory = elements.categorySelect.value;
+        const categorias = isAdmin
+          ? [...categoriasBase, ...categoriasAdmin]
+          : categoriasBase;
+        elements.categorySelect.replaceChildren(
+          ...categorias.map((categoria) => {
+            const option = document.createElement("option");
+            option.value = categoria;
+            option.textContent = categoria;
+            return option;
+          }),
+        );
+        elements.categorySelect.value = categorias.includes(selectedCategory)
+          ? selectedCategory
+          : categoriasBase[0];
+        atualizarDetalheCategoria();
+      }
+
+      function atualizarDetalheCategoria() {
+        const isGeneralBill = elements.categorySelect.value === "Contas Gerais";
+        elements.categoryDetailWrapper.classList.toggle("hidden", !isGeneralBill);
+        elements.categoryDetail.required = isGeneralBill;
+        if (!isGeneralBill) elements.categoryDetail.value = "";
+      }
+
+      function isAdmin() {
+        return localStorage.getItem(STORAGE_KEYS.role) === "admin";
+      }
+
+      function obterParametrosPeriodo() {
+        const parametros = new URLSearchParams();
+        const inicio = document.getElementById("filter-start").value;
+        const fim = document.getElementById("filter-end").value;
+        if (inicio) parametros.set("inicio", inicio);
+        if (fim) parametros.set("fim", fim);
+        return parametros;
+      }
+
+      function renderGraficoMembros(resumo) {
+        if (graficoMembros) {
+          graficoMembros.destroy();
+          graficoMembros = null;
+        }
+
+        const membroSelecionado = elements.familyMemberFilter.value;
+        const dados = membroSelecionado
+          ? resumo.filter((membro) => String(membro.usuario_id) === membroSelecionado)
+          : resumo;
+        if (dados.length === 0) {
+          elements.familyChartContainer.classList.add("hidden");
+          elements.familyChartEmpty.classList.remove("hidden");
+          return;
+        }
+
+        elements.familyChartEmpty.classList.add("hidden");
+        if (typeof Chart === "undefined") {
+          elements.familyChartContainer.classList.add("hidden");
+          showMessage(
+            elements.familySummaryError,
+            "Não foi possível carregar o gráfico familiar. Verifique a ligação à biblioteca de gráficos.",
+          );
+          return;
+        }
+
+        clearMessage(elements.familySummaryError);
+        elements.familyChartContainer.classList.remove("hidden");
+        graficoMembros = new Chart(document.getElementById("family-chart"), {
+          type: "bar",
+          data: {
+            labels: dados.map((membro) => membro.usuario_nome),
+            datasets: [{
+              label: "Despesas",
+              data: dados.map((membro) => Number(membro.total_despesas)),
+              backgroundColor: dados.map(
+                (_, index) => coresGrafico[index % coresGrafico.length],
+              ),
+              borderRadius: 6,
+              maxBarThickness: 36,
+            }],
+          },
+          options: {
+            indexAxis: "y",
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => `Despesas: ${currency(context.parsed.x)}`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  color: "#94a3b8",
+                  callback: (value) => currency(value),
+                },
+                grid: { color: "rgba(71, 85, 105, 0.22)" },
+              },
+              y: {
+                ticks: { color: "#e2e8f0", font: { weight: "600" } },
+                grid: { display: false },
+              },
+            },
+          },
+        });
+      }
+
+      async function carregarResumoMembros() {
+        clearMessage(elements.familySummaryError);
+        try {
+          const parametros = obterParametrosPeriodo();
+          const query = parametros.size ? `?${parametros}` : "";
+          const resumo = await requestApi(`/transacoes/resumo-membros${query}`);
+          if (!Array.isArray(resumo)) {
+            throw new Error("A API devolveu um resumo familiar inválido.");
+          }
+          resumoMembros = resumo;
+
+          const membroSelecionado = elements.familyMemberFilter.value;
+          const opcoes = [
+            Object.assign(document.createElement("option"), {
+              value: "",
+              textContent: "Todos os membros",
+            }),
+            ...resumo.map((membro) => {
+              const option = document.createElement("option");
+              option.value = String(membro.usuario_id);
+              option.textContent = membro.usuario_nome;
+              return option;
+            }),
+          ];
+          elements.familyMemberFilter.replaceChildren(...opcoes);
+          if (resumo.some((membro) => String(membro.usuario_id) === membroSelecionado)) {
+            elements.familyMemberFilter.value = membroSelecionado;
+          }
+          renderGraficoMembros(resumoMembros);
+        } catch (error) {
+          resumoMembros = [];
+          showMessage(elements.familySummaryError, error.message);
+          elements.familyChartContainer.classList.add("hidden");
+          elements.familyChartEmpty.classList.add("hidden");
+        }
+      }
+
+      async function login(event) {
+        event.preventDefault();
+        clearMessage(elements.loginError);
+        const button = document.getElementById("login-submit");
+        setBusy(button, true, "A entrar…");
+
+        const formData = new URLSearchParams();
+        formData.set("username", document.getElementById("login-email").value.trim());
+        formData.set("password", document.getElementById("login-senha").value);
+
+        try {
+          const result = await requestApi("/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData,
+          });
+          localStorage.setItem(STORAGE_KEYS.token, result.access_token);
+          localStorage.setItem(STORAGE_KEYS.role, result.tipo);
+          localStorage.setItem(STORAGE_KEYS.email, formData.get("username"));
+          if (document.getElementById("remember-me").checked) {
+            localStorage.setItem(STORAGE_KEYS.rememberedEmail, formData.get("username"));
+          } else {
+            localStorage.removeItem(STORAGE_KEYS.rememberedEmail);
+          }
+          localStorage.removeItem(STORAGE_KEYS.name);
+          await carregarDashboard();
+        } catch (error) {
+          showMessage(elements.loginError, error.message);
+        } finally {
+          setBusy(button, false, "", "Entrar na conta");
+        }
+      }
+
+      async function registarUtilizador(event) {
+        event.preventDefault();
+        clearMessage(elements.registerError);
+        const button = document.getElementById("register-submit");
+        setBusy(button, true, "A criar conta…");
+
+        const nome = document.getElementById("register-nome").value.trim();
+        const email = document.getElementById("register-email").value.trim();
+        const senha = document.getElementById("register-senha").value;
+        try {
+          const result = await requestApi("/usuarios/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome, email, senha }),
+          });
+          document.getElementById("login-email").value = email;
+          document.getElementById("login-senha").value = "";
+          document.getElementById("login-senha").focus();
+          selectAuthTab("login");
+          showMessage(elements.loginError, result.mensagem || "Conta criada. Inicie sessão para continuar.");
+          elements.loginError.classList.remove("border-rose-400/20", "bg-rose-400/10", "text-rose-300");
+          elements.loginError.classList.add("border-emerald-400/20", "bg-emerald-400/10", "text-emerald-300");
+        } catch (error) {
+          showMessage(elements.registerError, error.message);
+        } finally {
+          setBusy(button, false, "", "Criar conta");
+        }
+      }
+
+      function currency(value) {
+        return currencyFormatter.format(value);
+      }
+
+      function renderResumo(transacoes) {
+        const receitas = transacoes.reduce(
+          (total, transacao) => transacao.tipo === "receita" ? total + Math.abs(Number(transacao.valor)) : total,
+          0,
+        );
+        const despesas = transacoes.reduce(
+          (total, transacao) => transacao.tipo === "despesa" ? total + Math.abs(Number(transacao.valor)) : total,
+          0,
+        );
+
+        document.getElementById("summary-income").textContent = currency(receitas);
+        document.getElementById("summary-expenses").textContent = currency(despesas);
+        document.getElementById("summary-balance").textContent = currency(receitas - despesas);
+        const totalCartao = transacoes.reduce(
+          (total, transacao) =>
+            transacao.tipo === "despesa" &&
+            transacao.metodo_pagamento === "Cartão de Crédito"
+              ? total + Math.abs(Number(transacao.valor))
+              : total,
+          0,
+        );
+        document.getElementById("credit-total").textContent = currency(totalCartao);
+        document.getElementById("last-updated").textContent =
+          `Atualizado às ${new Intl.DateTimeFormat("pt-PT", { hour: "2-digit", minute: "2-digit" }).format(new Date())}`;
+        renderGraficoCategorias(transacoes);
+      }
+
+      function renderGraficoCategorias(transacoes) {
+        const chartError = document.getElementById("category-chart-error");
+        const chartContainer = document.getElementById("category-chart-container");
+        const chartEmpty = document.getElementById("category-chart-empty");
+        if (graficoCategorias) {
+          graficoCategorias.destroy();
+          graficoCategorias = null;
+        }
+        clearMessage(chartError);
+
+        const totais = new Map();
+        transacoes
+          .filter((transacao) => transacao.tipo === "despesa")
+          .forEach((transacao) => {
+            const categoria = transacao.categoria_detalhe
+              ? `${transacao.categoria} · ${transacao.categoria_detalhe}`
+              : transacao.categoria || "Sem categoria";
+            totais.set(
+              categoria,
+              (totais.get(categoria) || 0) + Math.abs(Number(transacao.valor)),
+            );
+          });
+
+        if (totais.size === 0) {
+          chartContainer.classList.add("hidden");
+          chartEmpty.classList.remove("hidden");
+          return;
+        }
+        chartEmpty.classList.add("hidden");
+        if (typeof Chart === "undefined") {
+          chartContainer.classList.add("hidden");
+          showMessage(chartError, "Não foi possível carregar o gráfico. Verifique a ligação à biblioteca de gráficos.");
+          return;
+        }
+
+        chartContainer.classList.remove("hidden");
+        graficoCategorias = new Chart(document.getElementById("category-chart"), {
+          type: "doughnut",
+          data: {
+            labels: [...totais.keys()],
+            datasets: [{
+              data: [...totais.values()],
+              backgroundColor: [...totais.keys()].map(
+                (_, index) => coresGrafico[index % coresGrafico.length],
+              ),
+              borderColor: "#111827",
+              borderWidth: 3,
+              hoverOffset: 6,
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            cutout: "68%",
+            plugins: {
+              legend: {
+                position: "right",
+                labels: { color: "#cbd5e1", boxWidth: 10, boxHeight: 10, padding: 16 },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => `${context.label}: ${currency(context.parsed)}`,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function criarLinhaTransacao(transacao) {
+        const receita = transacao.tipo === "receita";
+        const row = document.createElement("tr");
+        row.className = "transaction-row transition hover:bg-slate-800/30";
+
+        const descriptionCell = document.createElement("td");
+        descriptionCell.className = "px-5 py-4 sm:px-6";
+        const description = document.createElement("p");
+        description.className = "max-w-xs truncate text-sm font-medium text-slate-200";
+        description.textContent = transacao.descricao;
+        descriptionCell.append(description);
+
+        const categoryCell = document.createElement("td");
+        categoryCell.className = "px-5 py-4";
+        const categoryName = document.createElement("p");
+        categoryName.className = "text-sm text-slate-300";
+        categoryName.textContent = transacao.categoria || "Contas Gerais";
+        categoryCell.append(categoryName);
+        if (transacao.categoria_detalhe) {
+          const categoryDetail = document.createElement("p");
+          categoryDetail.className = "mt-0.5 text-xs text-slate-500";
+          categoryDetail.textContent = transacao.categoria_detalhe;
+          categoryCell.append(categoryDetail);
+        }
+
+        const cells = [descriptionCell, categoryCell];
+        if (isAdmin()) {
+          const memberCell = document.createElement("td");
+          memberCell.className = "whitespace-nowrap px-5 py-4 text-sm font-medium text-slate-200";
+          memberCell.textContent = transacao.usuario_nome || "Utilizador indisponível";
+          cells.push(memberCell);
+        }
+
+        const typeCell = document.createElement("td");
+        typeCell.className = "px-5 py-4";
+        const badge = document.createElement("span");
+        badge.className = receita
+          ? "inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-300"
+          : "inline-flex items-center gap-1.5 rounded-full bg-rose-400/10 px-2.5 py-1 text-xs font-medium text-rose-300";
+        const dot = document.createElement("span");
+        dot.className = receita ? "h-1.5 w-1.5 rounded-full bg-emerald-400" : "h-1.5 w-1.5 rounded-full bg-rose-400";
+        badge.append(dot, document.createTextNode(receita ? "Receita" : "Despesa"));
+        typeCell.append(badge);
+
+        const dateCell = document.createElement("td");
+        dateCell.className = "whitespace-nowrap px-5 py-4 text-sm text-slate-400";
+        const transactionDate = new Date(transacao.data);
+        dateCell.textContent = Number.isNaN(transactionDate.getTime())
+          ? "—"
+          : dateFormatter.format(transactionDate);
+
+        const paymentCell = document.createElement("td");
+        paymentCell.className = "whitespace-nowrap px-5 py-4 text-sm text-slate-400";
+        paymentCell.textContent = transacao.metodo_pagamento || "Dinheiro";
+
+        const amountCell = document.createElement("td");
+        amountCell.className = receita
+          ? "whitespace-nowrap px-5 py-4 text-right text-sm font-semibold text-emerald-400 sm:px-6"
+          : "whitespace-nowrap px-5 py-4 text-right text-sm font-semibold text-rose-400 sm:px-6";
+        amountCell.textContent = `${receita ? "+" : "−"} ${currency(Math.abs(Number(transacao.valor)))}`;
+
+        row.append(...cells, typeCell, dateCell, paymentCell, amountCell);
+        return row;
+      }
+
+      async function buscarTransacoes() {
+        clearMessage(elements.transactionsError);
+        try {
+          const parametros = obterParametrosPeriodo();
+          if (isAdmin() && elements.familyMemberFilter.value) {
+            parametros.set("member_id", elements.familyMemberFilter.value);
+          }
+          const query = parametros.size ? `?${parametros}` : "";
+          const transacoes = await requestApi(`/transacoes/${query}`);
+          if (!Array.isArray(transacoes)) {
+            throw new Error("A API devolveu uma resposta de transações inválida.");
+          }
+          renderResumo(transacoes);
+          document.getElementById("transaction-count").textContent =
+            `${transacoes.length} ${transacoes.length === 1 ? "transação" : "transações"}`;
+          elements.transactionRows.replaceChildren();
+
+          if (transacoes.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.colSpan = isAdmin() ? 7 : 6;
+            cell.className = "px-6 py-14 text-center";
+            const title = document.createElement("p");
+            title.className = "text-sm font-medium text-slate-300";
+            title.textContent = "Ainda não há transações";
+            const hint = document.createElement("p");
+            hint.className = "mt-1 text-xs text-slate-500";
+            hint.textContent = "Adicione a primeira transação para ver o resumo das suas finanças.";
+            cell.append(title, hint);
+            row.append(cell);
+            elements.transactionRows.append(row);
+            return;
+          }
+
+          transacoes.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+          elements.transactionRows.append(...transacoes.map(criarLinhaTransacao));
+        } catch (error) {
+          showMessage(elements.transactionsError, error.message);
+          elements.transactionRows.replaceChildren();
+          document.getElementById("transaction-count").textContent = "Indisponível";
+        }
+      }
+
+      async function criarTransacao(event) {
+        event.preventDefault();
+        clearMessage(elements.transactionError);
+        const button = document.getElementById("transacao-submit");
+        setBusy(button, true, "A guardar…");
+
+        const descricao = document.getElementById("trans-desc").value.trim();
+        const valor = Number(document.getElementById("trans-valor").value);
+        const tipo = document.getElementById("trans-tipo").value;
+        const categoria = elements.categorySelect.value;
+        const categoria_detalhe = elements.categoryDetail.value.trim();
+        const metodo_pagamento = document.getElementById("trans-metodo-pagamento").value;
+        if (!descricao || !Number.isFinite(valor) || valor <= 0 ||
+            (categoria === "Contas Gerais" && !categoria_detalhe)) {
+          showMessage(elements.transactionError, "Preencha a descrição, indique um valor superior a zero e detalhe a conta selecionada.");
+          setBusy(button, false);
+          return;
+        }
+
+        try {
+          await requestApi("/transacoes/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ descricao, valor, tipo, categoria, categoria_detalhe: categoria_detalhe || null, metodo_pagamento }),
+          });
+          document.getElementById("transacao-form").reset();
+          atualizarDetalheCategoria();
+          await buscarTransacoes();
+        } catch (error) {
+          showMessage(elements.transactionError, error.message);
+        } finally {
+          setBusy(button, false, "", "Adicionar");
+        }
+      }
+
+      async function carregarDashboard() {
+        const email = localStorage.getItem(STORAGE_KEYS.email) || "";
+        const nome = localStorage.getItem(STORAGE_KEYS.name) || email || "Utilizador";
+        const tipo = localStorage.getItem(STORAGE_KEYS.role) || "membro";
+        configurarCategorias(tipo === "admin");
+        const adminView = tipo === "admin";
+        elements.familyControl.classList.toggle("hidden", !adminView);
+        document.getElementById("transaction-member-heading").classList.toggle("hidden", !adminView);
+        elements.userName.textContent = nome;
+        elements.userName.title = email && nome !== email ? email : "";
+        elements.userRole.textContent = tipo === "admin" ? "Administrador" : "Membro";
+        elements.userAvatar.textContent = Array.from(nome.trim())[0]?.toLocaleUpperCase("pt-PT") || "U";
+        elements.userInfo.classList.remove("hidden");
+        elements.userInfo.classList.add("flex");
+        elements.authSection.classList.add("hidden");
+        elements.dashboardSection.classList.remove("hidden");
+        await buscarTransacoes();
+        if (adminView) await carregarResumoMembros();
+      }
+
+      async function exportarBackup() {
+        const button = document.getElementById("backup-button");
+        const statusElement = document.getElementById("backup-status");
+        button.disabled = true;
+        statusElement.textContent = "";
+        statusElement.classList.add("hidden");
+        statusElement.classList.remove("text-rose-300");
+        statusElement.classList.add("text-emerald-300");
+        try {
+          const transacoes = await requestApi("/transacoes/");
+          if (!Array.isArray(transacoes)) {
+            throw new Error("A API devolveu um histórico de transações inválido.");
+          }
+          const backup = {
+            aplicacao: "Controle Financeiro — Família Vieira Agostini",
+            exportado_em: new Date().toISOString(),
+            perfil: localStorage.getItem(STORAGE_KEYS.role),
+            email: localStorage.getItem(STORAGE_KEYS.email),
+            transacoes,
+          };
+          const arquivo = new Blob([JSON.stringify(backup, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(arquivo);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `backup-financeiro-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.append(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          statusElement.textContent = `${transacoes.length} transações exportadas.`;
+          statusElement.classList.remove("hidden");
+        } catch (error) {
+          statusElement.textContent = error.message;
+          statusElement.classList.remove("hidden", "text-emerald-300");
+          statusElement.classList.add("text-rose-300");
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      function fazerLogout() {
+        [
+          STORAGE_KEYS.token,
+          STORAGE_KEYS.role,
+          STORAGE_KEYS.email,
+          STORAGE_KEYS.name,
+        ].forEach((key) => localStorage.removeItem(key));
+        elements.dashboardSection.classList.add("hidden");
+        elements.userInfo.classList.add("hidden");
+        elements.userInfo.classList.remove("flex");
+        elements.authSection.classList.remove("hidden");
+        document.getElementById("login-form").reset();
+        elements.registerPanel.reset();
+        selectAuthTab("login");
+      }
+
+      elements.loginTab.addEventListener("click", () => selectAuthTab("login"));
+      elements.registerTab.addEventListener("click", () => selectAuthTab("register"));
+      elements.loginPanel.addEventListener("submit", login);
+      document.getElementById("remember-me").addEventListener("change", (event) => {
+        if (!event.currentTarget.checked) {
+          localStorage.removeItem(STORAGE_KEYS.rememberedEmail);
+        }
+      });
+      elements.registerPanel.addEventListener("submit", registarUtilizador);
+      document.getElementById("transacao-form").addEventListener("submit", criarTransacao);
+      document.getElementById("period-filter").addEventListener("submit", (event) => {
+        event.preventDefault();
+        buscarTransacoes();
+        if (isAdmin()) carregarResumoMembros();
+      });
+      document.getElementById("clear-filter").addEventListener("click", () => {
+        document.getElementById("period-filter").reset();
+        buscarTransacoes();
+        if (isAdmin()) carregarResumoMembros();
+      });
+      elements.familyMemberFilter.addEventListener("change", () => {
+        buscarTransacoes();
+        renderGraficoMembros(resumoMembros);
+      });
+      elements.categorySelect.addEventListener("change", atualizarDetalheCategoria);
+      document.getElementById("backup-button").addEventListener("click", exportarBackup);
+      document.getElementById("logout-button").addEventListener("click", fazerLogout);
+
+      const rememberedEmail = localStorage.getItem(STORAGE_KEYS.rememberedEmail);
+      if (rememberedEmail) {
+        document.getElementById("login-email").value = rememberedEmail;
+        document.getElementById("remember-me").checked = true;
+      }
+      selectAuthTab("login");
+      if (localStorage.getItem(STORAGE_KEYS.token)) {
+        carregarDashboard();
+      }
+    </script>
+  </body>
+</html>
