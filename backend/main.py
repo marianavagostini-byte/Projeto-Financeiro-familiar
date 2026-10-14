@@ -1,11 +1,15 @@
 import os
-from datetime import date, datetime, time, timedelta
-from fastapi import FastAPI, Depends, HTTPException, status
+from contextlib import asynccontextmanager
+from datetime import date, datetime, time, timedelta, timezone
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy import and_, case, func, inspect, text
+from sqlalchemy import and_, func, inspect, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from backend.database import SessionLocal, engine
@@ -20,15 +24,12 @@ if not SECRET_KEY or len(SECRET_KEY) < 32 or SECRET_KEY.startswith("replace_"):
         "Configure SECRET_KEY com uma chave aleatória de pelo menos 32 caracteres."
     )
 
-# Cria as tabelas na base de dados se não existirem
-models.Base.metadata.create_all(bind=engine)
-
-
 def migrar_colunas_de_transacao():
-    colunas_existentes = {
-        coluna["name"] for coluna in inspect(engine).get_columns("transacoes")
-    }
     with engine.begin() as conexao:
+        colunas_existentes = {
+            coluna["name"]
+            for coluna in inspect(conexao).get_columns("transacoes")
+        }
         if "categoria" not in colunas_existentes:
             conexao.execute(
                 text(
@@ -49,14 +50,44 @@ def migrar_colunas_de_transacao():
             )
 
 
-migrar_colunas_de_transacao()
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    models.Base.metadata.create_all(bind=engine)
+    migrar_colunas_de_transacao()
+    yield
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def tratar_erro_validacao(
+    _: Request, excecao: RequestValidationError
+) -> JSONResponse:
+    erros = [
+        {
+            "loc": erro["loc"],
+            "msg": erro["msg"],
+            "type": erro["type"],
+        }
+        for erro in excecao.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": erros})
+
+
+origens_frontend = [
+    origem.strip()
+    for origem in os.getenv(
+        "FRONTEND_ORIGINS",
+        "http://127.0.0.1:5500,http://localhost:5500",
+    ).split(",")
+    if origem.strip()
+]
 
 # Configuração de CORS para permitir que o frontend aceda à API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origens_frontend,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,7 +112,9 @@ def get_db():
 
 def criar_token_acesso(data: dict):
     dados_a_codificar = data.copy()
-    expiracao = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expiracao = datetime.now(timezone.utc) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     dados_a_codificar.update({"exp": expiracao})
     return jwt.encode(dados_a_codificar, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -108,18 +141,28 @@ def obter_utilizador_atual(
     return usuario
 
 
-@app.post("/usuarios/")
+@app.post("/usuarios/", status_code=status.HTTP_201_CREATED)
 def criar_usuario(usuario: schemas.UsuarioCriacao, db: Session = Depends(get_db)):
     db_user = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Este e-mail já está registado.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este e-mail já está registado.",
+        )
 
     senha_hash = pwd_context.hash(usuario.senha)
     db_usuario = Usuario(
         nome=usuario.nome, email=usuario.email, senha_hash=senha_hash, tipo="membro"
     )
     db.add(db_usuario)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este e-mail já está registado.",
+        )
     db.refresh(db_usuario)
     return {"mensagem": "Utilizador criado com sucesso!", "nome": db_usuario.nome}
 
@@ -131,13 +174,21 @@ def login_para_obter_token(
     usuario = db.query(Usuario).filter(Usuario.email == form_data.username).first()
 
     if not usuario or not pwd_context.verify(form_data.password, usuario.senha_hash):
-        raise HTTPException(status_code=400, detail="E-mail ou senha incorretos")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="E-mail ou senha incorretos",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     access_token = criar_token_acesso(data={"sub": usuario.email, "tipo": usuario.tipo})
     return {"access_token": access_token, "token_type": "bearer", "tipo": usuario.tipo}
 
 
-@app.post("/transacoes/", response_model=TransacaoResposta)
+@app.post(
+    "/transacoes/",
+    response_model=TransacaoResposta,
+    status_code=status.HTTP_201_CREATED,
+)
 def criar_transacao(
     transacao: TransacaoCriacao,
     db: Session = Depends(get_db),

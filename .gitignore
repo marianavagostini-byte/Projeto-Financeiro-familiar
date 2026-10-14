@@ -3,5 +3,15 @@
 !.env.example
 .venv/
 *.db
+*.db-*
+*.sqlite
+*.sqlite3
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+*.egg-info/
+build/
+dist/

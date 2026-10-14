@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship
-import datetime
+from datetime import datetime, timezone
 
 from backend.database import Base
 
@@ -37,7 +37,7 @@ class Transacao(Base):
         default="Dinheiro",
         server_default=text("'Dinheiro'"),
     )
-    data = Column(DateTime, default=datetime.datetime.utcnow)
+    data = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
 
     usuario = relationship("Usuario", back_populates="transacoes")

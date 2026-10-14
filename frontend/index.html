@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080d18" />
+    <meta name="api-base-url" content="http://127.0.0.1:8000" />
     <title>Controle Financeiro — Família Vieira Agostini</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -354,7 +355,7 @@
     <script>
       "use strict";
 
-      const API_URL = "http://127.0.0.1:8000";
+      const API_URL = document.querySelector('meta[name="api-base-url"]').content.replace(/\/+$/, "");
       const STORAGE_KEYS = {
         token: "token",
         role: "tipo",
@@ -459,6 +460,10 @@
           : null;
         if (!response.ok) {
           const detail = body && typeof body.detail === "string" ? body.detail : null;
+          if (response.status === 401 && path !== "/token") {
+            fazerLogout();
+            showMessage(elements.loginError, "A sua sessão expirou. Inicie sessão novamente.");
+          }
           throw new Error(detail || `O pedido falhou (HTTP ${response.status}).`);
         }
         return body;
@@ -1006,7 +1011,7 @@
         elements.userInfo.classList.add("hidden");
         elements.userInfo.classList.remove("flex");
         elements.authSection.classList.remove("hidden");
-        document.getElementById("login-form").reset();
+        elements.loginPanel.reset();
         elements.registerPanel.reset();
         selectAuthTab("login");
       }
